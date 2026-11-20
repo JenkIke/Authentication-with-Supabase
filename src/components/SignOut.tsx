@@ -1,37 +1,40 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { supabase } from "../utils/supabase";
+import { StyleSheet, View } from "react-native";
+import { useAuth } from "../context/AuthProvider";
+import { getAuthErrorMessage } from "../utils/errors";
+import FeedbackMessage from "./FeedbackMessage";
+import SubmitButton from "./SubmitButton";
 
 export default function SignOut() {
+  const { signOut } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function handleSignOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) setError(error.message);
+    setLoading(true);
+    setError(null);
+    try {
+      await signOut();
+    } catch (error) {
+      setError(getAuthErrorMessage(error));
+      setLoading(false);
+    }
   }
 
   return (
     <View style={styles.wrapper}>
-      {error && <Text style={styles.error}>{error}</Text>}
-      <Pressable
+      <FeedbackMessage type="error" message={error} />
+      <SubmitButton
+        title="Sign out"
+        loadingTitle="Signing out..."
+        loading={loading}
+        variant="danger"
         onPress={handleSignOut}
-        style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-      >
-        <Text style={styles.text}>Sign out</Text>
-      </Pressable>
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { gap: 8 },
-  button: {
-    backgroundColor: "#d32f2f",
-    borderRadius: 6,
-    padding: 12,
-    alignItems: "center",
-  },
-  pressed: { opacity: 0.7 },
-  text: { color: "white", fontWeight: "bold" },
-  error: { color: "crimson" },
+  wrapper: { gap: 8, marginTop: 16 },
 });

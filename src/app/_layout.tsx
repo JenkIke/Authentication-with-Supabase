@@ -1,77 +1,51 @@
-import { Link } from "expo-router";
-import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
-import { useAuth } from "../context/AuthProvider";
-import { supabase } from "../utils/supabase";
+import { Stack } from "expo-router";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import HeaderUser from "../components/HeaderUser";
+import { AuthProvider, useAuth } from "../context/AuthProvider";
 
-type Instrument = {
-  id: number;
-  name: string;
-};
+function RootNavigator() {
+  const { session, loading } = useAuth();
 
-export default function Home() {
-  const { session } = useAuth();
-  const [instruments, setInstruments] = useState<Instrument[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function getInstruments() {
-      const { data, error } = await supabase.from("instruments").select();
-
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
-      setInstruments(data ?? []);
-    }
-    getInstruments();
-  }, []);
-
-  if (error) {
+  if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Error loading instruments: {error}</Text>
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
 
+  const isSignedIn = !!session;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Home Page</Text>
+    <Stack
+      screenOptions={{
+        headerRight: isSignedIn ? () => <HeaderUser /> : undefined,
+      }}
+    >
+      <Stack.Screen name="index" options={{ title: "Home" }} />
 
-      <View style={styles.nav}>
-        {session ? (
-          <Link href="/profile" style={styles.link}>
-            View your profile
-          </Link>
-        ) : (
-          <>
-            <Link href="/sign-in" style={styles.link}>
-              Sign in
-            </Link>
-            <Link href="/sign-up" style={styles.link}>
-              Sign up
-            </Link>
-          </>
-        )}
-      </View>
+      <Stack.Protected guard={isSignedIn}>
+        <Stack.Screen name="profile" options={{ title: "Profile" }} />
+      </Stack.Protected>
 
-      <Text style={styles.heading}>Instruments (public)</Text>
-      <FlatList
-        data={instruments}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <Text style={styles.item}>{item.name}</Text>}
-      />
-    </View>
+      <Stack.Protected guard={!isSignedIn} redirectTo="/profile">
+        <Stack.Screen name="sign-in" options={{ title: "Sign in" }} />
+        <Stack.Screen name="sign-up" options={{ title: "Sign up" }} />
+      </Stack.Protected>
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24 },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 12 },
-  nav: { flexDirection: "row", gap: 16, marginBottom: 24 },
-  link: { fontSize: 16, color: "#1565c0", textDecorationLine: "underline" },
-  heading: { fontSize: 20, fontWeight: "bold", marginBottom: 8 },
-  item: { fontSize: 16, paddingVertical: 4 },
+  loading: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
+  loadingText: { color: "#666" },
 });
