@@ -20,6 +20,9 @@ function RootNavigator() {
   return (
     <Stack
       screenOptions={{
+        // Expo SDK 58 makes the iOS 26 header see-through by default, so screen
+        // content slides underneath it. A solid header keeps content below it.
+        headerTransparent: false,
         headerRight: isSignedIn ? () => <HeaderUser /> : undefined,
       }}
     >
