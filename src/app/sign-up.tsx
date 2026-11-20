@@ -1,57 +1,26 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Link } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
-import { z } from "zod";
-import { supabase } from "../utils/supabase";
-
-const signUpSchema = z
-  .object({
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 character long")
-      .max(20, "Username must be at most 20 character long"),
-    password: z
-      .string()
-      .min(6, { message: "Password must be at least 6 characters" }),
-    email: z.string().email("Please enter a valid email address"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Password does not match",
-    path: ["confirmPassword"],
-  });
-
-type SignupFormData = z.infer<typeof signUpSchema>;
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import FeedbackMessage from "../components/FeedbackMessage";
+import FormInput from "../components/FormInput";
+import PublicInstruments from "../components/PublicInstruments";
+import SubmitButton from "../components/SubmitButton";
+import { useAuth } from "../context/AuthProvider";
+import { signUpSchema, type SignUpFormData } from "../schemas/auth";
+import { getAuthErrorMessage } from "../utils/errors";
 
 export default function SignUp() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { signUp } = useAuth();
   const [notice, setNotice] = useState<string | null>(null);
-
-  async function handleSignUp() {
-    setLoading(true);
-    setError(null);
-    setNotice(null);
-
-    const { data, error } = await supabase.auth.signUp({ email, password });
-
-    if (error) {
-      setError(error.message);
-    } else if (!data.session) {
-      // Email confirmation is on: the account exists, but nobody is signed in yet
-      setNotice("Check your email to confirm your account.");
-    }
-    setLoading(false);
-  }
-
   const {
-    register,
+    control,
     handleSubmit,
+    setError,
+    reset,
     formState: { errors, isSubmitting },
-  } = useForm<SignupFormData>({
+  } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       username: "",
@@ -61,47 +30,91 @@ export default function SignUp() {
     },
   });
 
-  const onSubmit = async (data: SignupFormData) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const onSubmit = async ({ username, email, password }: SignUpFormData) => {
+    setNotice(null);
+    try {
+      const result = await signUp({ email, password, username });
+
+      if (result === "already-registered") {
+        setError("root", {
+          message:
+            "An account with this email already exists. Try signing in instead.",
+        });
+      } else if (result === "confirm-email") {
+        // Email confirmation is on: the account exists, but nobody is signed in yet
+        reset();
+        setNotice(
+          `Account created! We sent a confirmation link to ${email}. Open it, then sign in.`,
+        );
+      }
+    } catch (error) {
+      setError("root", { message: getAuthErrorMessage(error) });
+    }
   };
 
   return (
-    <View style={{ flex: 1, padding: 24, gap: 12 }}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.form}>
         <Text style={styles.heading}>Sign up</Text>
-        <TextInput
-          style={styles.input}
+        <FormInput
+          control={control}
+          name="username"
+          error={errors.username?.message}
+          editable={!isSubmitting}
+          placeholder="Username"
+          autoCapitalize="none"
+          autoComplete="username"
+        />
+        <FormInput
+          control={control}
+          name="email"
+          error={errors.email?.message}
+          editable={!isSubmitting}
           placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
           autoComplete="email"
         />
-        <TextInput
-          style={styles.input}
+        <FormInput
+          control={control}
+          name="password"
+          error={errors.password?.message}
+          editable={!isSubmitting}
           placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
           secureTextEntry
           autoCapitalize="none"
           autoComplete="new-password"
         />
-        {error && <Text style={styles.error}>{error}</Text>}
-        {notice && <Text>{notice}</Text>}
-        <Button
+        <FormInput
+          control={control}
+          name="confirmPassword"
+          error={errors.confirmPassword?.message}
+          editable={!isSubmitting}
+          placeholder="Confirm password"
+          secureTextEntry
+          autoCapitalize="none"
+          autoComplete="new-password"
+        />
+        <FeedbackMessage type="error" message={errors.root?.message} />
+        <FeedbackMessage type="success" message={notice} />
+        <SubmitButton
           title="Create account"
-          onPress={handleSignUp}
-          disabled={loading}
+          loadingTitle="Creating account..."
+          loading={isSubmitting}
+          onPress={() => handleSubmit(onSubmit)()}
         />
       </View>
-    </View>
+      <Link href="/sign-in">Already have an account? Sign in</Link>
+      <PublicInstruments />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { padding: 24, gap: 16 },
   form: { gap: 12 },
   heading: { fontSize: 18, fontWeight: "bold" },
-  input: { borderWidth: 1, borderColor: "#999", borderRadius: 6, padding: 10 },
-  error: { color: "crimson" },
 });
