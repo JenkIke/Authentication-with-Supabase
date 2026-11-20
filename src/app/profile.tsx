@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import FeedbackMessage from "../components/FeedbackMessage";
+import ProtectedLessons from "../components/ProtectedLessons";
 import SignOut from "../components/SignOut";
 import SubmitButton from "../components/SubmitButton";
 import { useAuth } from "../context/AuthProvider";
@@ -83,7 +90,7 @@ export default function Profile() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.card}>
         <Text style={styles.badge}>PRIVATE</Text>
         <Text style={styles.label}>Display name</Text>
@@ -95,13 +102,15 @@ export default function Profile() {
           {profile?.favourite_instrument ?? "None yet"}
         </Text>
       </View>
+      <ProtectedLessons />
       <SignOut />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, gap: 12 },
+  scroll: { padding: 24, gap: 12 },
   center: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
   muted: { color: "#666" },
   card: {
