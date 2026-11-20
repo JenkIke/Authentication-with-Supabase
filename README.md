@@ -1,56 +1,93 @@
-# Welcome to your Expo app 👋
+# Authentication with Supabase
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+CPRG 303 Mobile Application Development (Fall 2026), Group 1.
 
-## Get started
+An Expo (React Native) app that uses Supabase Auth for sign-up, sign-in and sign-out, protects screens so only signed-in users can reach them, and reads data from Supabase tables secured with Row Level Security (RLS).
 
-1. Install dependencies
+**Group 1:** _Isaac Jenkins_ _Harderick Dhillon_
 
+## Features
+
+- **Sign up / Sign in / Sign out** with Supabase Auth (email + password)
+- **Form validation** with React Hook Form and Zod (`src/schemas/auth.ts`)
+- **Loading indicators** on every auth request, and **readable error messages** for invalid credentials, weak passwords, existing accounts and network failures (`src/utils/errors.ts`)
+- **Auth state shared through Context**: `AuthProvider` + `useAuth()` (`src/context/AuthProvider.tsx`)
+- **Session restore on launch**: a loading screen shows while the saved session is checked, then the app routes to the right screen
+- **Protected routes** with Expo Router `Stack.Protected`: signed-out users can't open Profile, and signed-in users are redirected away from Sign in / Sign up
+- **Signed-in user's name** (or email) shown in the navigation bar
+- **Public data** (`instruments`) shown on the Home and Sign-up screens
+- **RLS-protected data** (`lessons`) shown as a list on the Profile screen, readable only when signed in
+
+## Running the app
+
+### Prerequisites
+- A current Node.js LTS release
+- The **Expo Go** app on your phone (iOS or Android), or an Android emulator / iOS simulator
+
+### Steps
+1. **Clone and install**
    ```bash
+   git clone https://github.com/JenkIke/Authentication-with-Supabase.git
+   cd Authentication-with-Supabase
    npm install
    ```
-
-2. Start the app
-
+2. **Add your Supabase credentials.** Copy the example file, then fill in the two values (see [Supabase setup](#supabase-setup)):
+   ```bash
+   cp .env.example .env
+   ```
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+   ```
+   The `.env` file must be in the project root (next to `package.json`), and the variable names must start with `EXPO_PUBLIC_` or Expo won't load them.
+3. **Start the dev server**
    ```bash
    npx expo start
    ```
+   Scan the QR code with your phone's camera (iOS) or the Expo Go app (Android). If you edit `.env` while the app is open, fully reload the app.
 
-In the output, you'll find options to open the app in a
+## Supabase setup
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+1. Create a project at [supabase.com](https://supabase.com).
+2. **Get the credentials:** in **Project Settings → API Keys**, copy the **publishable** key, and copy the **Project URL** from **Project Settings → Data API**. Put both in `.env`. Never use the `secret` / `service_role` key in the app.
+3. **Create the tables and RLS policies:** open **SQL Editor → New query**, paste the contents of [`supabase/setup.sql`](supabase/setup.sql), and click **Run**. The script is safe to run more than once. It creates:
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   | Table | Who can read it (RLS) | Where it's shown |
+   |---|---|---|
+   | `instruments` | Everyone, signed in or not | Home and Sign-up screens |
+   | `lessons` | Signed-in users only | Profile screen (list) |
+   | `profiles` | Each user can read only their own row | Profile screen (card) |
 
-## Get a fresh project
+   It also adds a trigger that creates a `profiles` row on sign-up, using the username from the form.
+4. **Email confirmation (optional):** under **Authentication → Sign In / Providers → Email**, you can turn **Confirm email** off for faster testing. The app handles both settings: with it on, sign-up asks the user to confirm their email before signing in.
 
-When you're ready, run:
+## Test account
 
-```bash
-npm run reset-project
+| Email | Password |
+|---|---|
+| _example@gmail.com_ | _password_ |
+
+## Security notes
+
+- The Supabase URL and publishable key are stored in `.env`, which is listed in `.gitignore` and never committed. `.env.example` shows the required keys with placeholder values.
+- The publishable key is designed to ship inside client apps. The data is protected by the RLS policies in `supabase/setup.sql`, not by hiding the key.
+
+## Project structure
+
 ```
-
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+src/
+  app/            Screens (Expo Router file-based routes)
+    _layout.tsx   AuthProvider, loading screen, protected route guards
+    index.tsx     Home: links + public instruments
+    sign-in.tsx   Sign-in form
+    sign-up.tsx   Sign-up form + public instruments
+    profile.tsx   Protected: profile card + RLS-protected lessons + sign out
+  components/     FormInput, SubmitButton, FeedbackMessage, HeaderUser, SignOut,
+                  PublicInstruments, ProtectedLessons
+  context/        AuthProvider (session state, signIn / signUp / signOut)
+  hooks/          Data fetching for instruments and lessons
+  schemas/        Zod schemas for the auth forms
+  utils/          Supabase client, error message mapping
+supabase/
+  setup.sql       Tables, RLS policies, sample data, sign-up trigger
+```
