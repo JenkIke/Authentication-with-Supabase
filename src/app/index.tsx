@@ -1,6 +1,6 @@
 import { router } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
-import Card from "../components/Card";
+import { StyleSheet, View } from "react-native";
+import PageHeader from "../components/PageHeader";
 import PublicInstruments from "../components/PublicInstruments";
 import Screen from "../components/Screen";
 import SubmitButton from "../components/SubmitButton";
@@ -14,47 +14,34 @@ export default function Home() {
 
   return (
     <Screen>
-      <Card style={styles.hero}>
-        <View style={styles.logo} accessible={false}>
-          <Text style={styles.logoText}>♪</Text>
+      {session ? (
+        <View style={styles.block}>
+          <PageHeader
+            title={`Welcome back, ${displayName}`}
+            subtitle="Your members-only lessons are on your profile."
+          />
+          <SubmitButton
+            title="Go to my profile"
+            onPress={() => router.push("/profile")}
+          />
         </View>
-
-        {session ? (
-          <>
-            <Text style={styles.title} accessibilityRole="header">
-              Welcome back, {displayName}!
-            </Text>
-            <Text style={styles.subtitle}>
-              Your members-only lessons are waiting on your profile.
-            </Text>
-            <SubmitButton
-              title="Go to my profile"
-              onPress={() => router.push("/profile")}
-            />
-          </>
-        ) : (
-          <>
-            <Text style={styles.title} accessibilityRole="header">
-              Learn an instrument
-            </Text>
-            <Text style={styles.subtitle}>
-              Browse instruments for free. Create an account to unlock
-              members-only lessons.
-            </Text>
-            <View style={styles.actions}>
-              <SubmitButton
-                title="Create account"
-                onPress={() => router.push("/sign-up")}
-              />
-              <SubmitButton
-                title="Sign in"
-                variant="secondary"
-                onPress={() => router.push("/sign-in")}
-              />
-            </View>
-          </>
-        )}
-      </Card>
+      ) : (
+        <View style={styles.block}>
+          <PageHeader
+            title="Welcome"
+            subtitle="Sign in or create an account to see members-only lessons."
+          />
+          <SubmitButton
+            title="Sign in"
+            onPress={() => router.push("/sign-in")}
+          />
+          <SubmitButton
+            title="Create account"
+            variant="secondary"
+            onPress={() => router.push("/sign-up")}
+          />
+        </View>
+      )}
 
       <PublicInstruments />
     </Screen>
@@ -63,25 +50,5 @@ export default function Home() {
 
 const createStyles = (t: Theme) =>
   StyleSheet.create({
-    hero: { padding: t.spacing.xl, gap: t.spacing.md },
-    logo: {
-      width: 48,
-      height: 48,
-      borderRadius: t.radius.pill,
-      backgroundColor: t.colors.primarySoft,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    logoText: { fontSize: 24, color: t.colors.primary },
-    title: {
-      fontSize: t.fontSize.title,
-      fontWeight: "700",
-      color: t.colors.text,
-    },
-    subtitle: {
-      fontSize: t.fontSize.body,
-      color: t.colors.textMuted,
-      lineHeight: 22,
-    },
-    actions: { gap: t.spacing.sm, marginTop: t.spacing.xs },
+    block: { gap: t.spacing.md },
   });

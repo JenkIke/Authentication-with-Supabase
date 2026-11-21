@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import AuthHeader from "../components/AuthHeader";
+import PageHeader from "../components/PageHeader";
 import AuthSwitchLink from "../components/AuthSwitchLink";
 import Card from "../components/Card";
 import FeedbackMessage from "../components/FeedbackMessage";
@@ -37,7 +37,7 @@ export default function SignInScreen() {
 
   return (
     <Screen>
-      <AuthHeader
+      <PageHeader
         title="Welcome back"
         subtitle="Sign in to see your profile and members-only lessons."
       />

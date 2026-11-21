@@ -5,7 +5,6 @@
 const light = {
   background: "#F6F5FB",
   surface: "#FFFFFF",
-  surfaceMuted: "#EFEDF8",
   text: "#1C1B29",
   textMuted: "#5F5D72",
   border: "#DDDAEA",
@@ -35,7 +34,6 @@ type Palette = typeof light;
 const dark: Palette = {
   background: "#0F0E17",
   surface: "#1A1926",
-  surfaceMuted: "#24233A",
   text: "#F2F1F8",
   textMuted: "#A9A7BE",
   border: "#34324A",

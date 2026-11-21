@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import AuthHeader from "../components/AuthHeader";
+import PageHeader from "../components/PageHeader";
 import AuthSwitchLink from "../components/AuthSwitchLink";
 import Card from "../components/Card";
 import FeedbackMessage from "../components/FeedbackMessage";
@@ -60,7 +60,7 @@ export default function SignUp() {
 
   return (
     <Screen>
-      <AuthHeader
+      <PageHeader
         title="Create your account"
         subtitle="Join to unlock members-only lessons. It only takes a minute."
       />

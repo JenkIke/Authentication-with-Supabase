@@ -6,7 +6,7 @@ import {
   type ErrorBoundaryProps,
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import FeedbackMessage from "../components/FeedbackMessage";
 import HeaderUser from "../components/HeaderUser";
 import SubmitButton from "../components/SubmitButton";
@@ -22,10 +22,7 @@ function RootNavigator() {
   // Shown while the saved Supabase session is being restored on launch
   if (loading) {
     return (
-      <View style={styles.center} accessibilityLabel="Restoring your session">
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>♪</Text>
-        </View>
+      <View style={styles.center}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.muted}>Restoring your session...</Text>
       </View>
@@ -42,7 +39,7 @@ function RootNavigator() {
         headerTransparent: false,
         headerStyle: { backgroundColor: theme.colors.surface },
         headerTintColor: theme.colors.primary,
-        headerTitleStyle: { color: theme.colors.text, fontWeight: "600" },
+        headerTitleStyle: { color: theme.colors.text },
         contentStyle: { backgroundColor: theme.colors.background },
         headerRight: isSignedIn ? () => <HeaderUser /> : undefined,
       }}
@@ -94,58 +91,40 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   const styles = useThemedStyles(createStyles);
 
   return (
-    <ScrollView contentContainerStyle={[styles.center, styles.errorPage]}>
-      <View style={styles.logo}>
-        <Text style={styles.logoText}>♪</Text>
-      </View>
+    <View style={styles.center}>
       <Text style={styles.title} accessibilityRole="header">
         Something went wrong
       </Text>
       <Text style={styles.muted}>
         The app hit an unexpected problem. Your account and data are safe.
       </Text>
-      {__DEV__ && (
-        <View style={styles.details}>
-          <FeedbackMessage type="error" message={error.message} />
-        </View>
-      )}
-      <View style={styles.details}>
+      <View style={styles.actions}>
+        {__DEV__ && <FeedbackMessage type="error" message={error.message} />}
         <SubmitButton title="Try again" onPress={retry} />
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const createStyles = (t: Theme) =>
   StyleSheet.create({
     center: {
-      flexGrow: 1,
+      flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      gap: t.spacing.lg,
+      gap: t.spacing.md,
       padding: t.spacing.xl,
       backgroundColor: t.colors.background,
     },
-    errorPage: { gap: t.spacing.md },
-    logo: {
-      width: 64,
-      height: 64,
-      borderRadius: t.radius.pill,
-      backgroundColor: t.colors.primarySoft,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    logoText: { fontSize: 32, color: t.colors.primary },
     title: {
       fontSize: t.fontSize.heading,
       fontWeight: "700",
       color: t.colors.text,
-      textAlign: "center",
     },
     muted: {
       fontSize: t.fontSize.body,
       color: t.colors.textMuted,
       textAlign: "center",
     },
-    details: { width: "100%", maxWidth: 480 },
+    actions: { width: "100%", maxWidth: 480, gap: t.spacing.md },
   });
