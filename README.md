@@ -61,6 +61,13 @@ An Expo (React Native) app that uses Supabase Auth for sign-up, sign-in and sign
    It also adds a trigger that creates a `profiles` row on sign-up, using the username from the form.
 4. **Email confirmation (optional):** under **Authentication → Sign In / Providers → Email**, you can turn **Confirm email** off for faster testing. The app handles both settings: with it on, sign-up asks the user to confirm their email before signing in.
 
+## Test account
+
+| Email | Password |
+|---|---|
+| cprg303.tester@example.com | Group1Test!2026 |
+
+Or create your own account on the Sign-up screen.
 
 ## Security notes
 
