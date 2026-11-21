@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import Avatar from "../components/Avatar";
+import Badge from "../components/Badge";
+import Card from "../components/Card";
 import FeedbackMessage from "../components/FeedbackMessage";
 import ProtectedLessons from "../components/ProtectedLessons";
+import Screen from "../components/Screen";
 import SignOut from "../components/SignOut";
 import SubmitButton from "../components/SubmitButton";
+import type { Theme } from "../constants/theme";
 import { useAuth } from "../context/AuthProvider";
+import { useTheme, useThemedStyles } from "../hooks/use-theme";
 import { getLoadErrorMessage } from "../utils/errors";
 import { supabase } from "../utils/supabase";
 
@@ -40,6 +40,8 @@ async function fetchProfile(userId: string): Promise<ProfileResult> {
 
 export default function Profile() {
   const { user, displayName } = useAuth();
+  const theme = useTheme();
+  const styles = useThemedStyles(createStyles);
   const userId = user?.id;
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,60 +74,73 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-        <Text style={styles.muted}>Loading your profile...</Text>
-      </View>
+      <Screen centered>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.muted}>Loading your profile...</Text>
+        </View>
+      </Screen>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.container}>
+      <Screen centered>
         <FeedbackMessage type="error" message={error} />
         <SubmitButton title="Try again" onPress={retry} />
         <SignOut />
-      </View>
+      </Screen>
     );
   }
 
+  const name = profile?.display_name ?? displayName;
+
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
-      <View style={styles.card}>
-        <Text style={styles.badge}>PRIVATE</Text>
-        <Text style={styles.label}>Display name</Text>
-        <Text style={styles.value}>{profile?.display_name ?? displayName}</Text>
-        <Text style={styles.label}>Email</Text>
-        <Text style={styles.value}>{user?.email}</Text>
-        <Text style={styles.label}>Favourite instrument</Text>
-        <Text style={styles.value}>
-          {profile?.favourite_instrument ?? "None yet"}
-        </Text>
-      </View>
+    <Screen>
+      <Card>
+        <View style={styles.identity}>
+          <Avatar name={name} size={56} />
+          <View style={styles.identityText}>
+            <Text style={styles.name} numberOfLines={1}>
+              {name}
+            </Text>
+            <Text style={styles.muted} numberOfLines={1}>
+              {user?.email}
+            </Text>
+          </View>
+          <Badge label="PRIVATE" tone="private" />
+        </View>
+        <View style={styles.divider} />
+        <View style={styles.field}>
+          <Text style={styles.label}>Favourite instrument</Text>
+          <Text style={styles.value}>
+            {profile?.favourite_instrument ?? "None yet"}
+          </Text>
+        </View>
+      </Card>
+
       <ProtectedLessons />
+
       <SignOut />
-    </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 12 },
-  scroll: { padding: 24, gap: 12 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
-  muted: { color: "#666" },
-  card: {
-    borderWidth: 1,
-    borderColor: "#999",
-    borderRadius: 8,
-    padding: 16,
-    gap: 4,
-  },
-  badge: {
-    alignSelf: "flex-start",
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "crimson",
-  },
-  label: { fontSize: 12, color: "#666", marginTop: 8 },
-  value: { fontSize: 18 },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    center: { alignItems: "center", gap: t.spacing.md },
+    muted: { fontSize: t.fontSize.label, color: t.colors.textMuted },
+    identity: { flexDirection: "row", alignItems: "center", gap: t.spacing.md },
+    identityText: { flex: 1, gap: 2 },
+    name: { fontSize: t.fontSize.heading, fontWeight: "700", color: t.colors.text },
+    divider: { height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border },
+    field: { gap: 2 },
+    label: {
+      fontSize: t.fontSize.small,
+      fontWeight: "600",
+      color: t.colors.textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    value: { fontSize: t.fontSize.body, color: t.colors.text },
+  });

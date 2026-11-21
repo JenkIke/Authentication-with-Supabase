@@ -1,9 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "expo-router";
 import { useForm } from "react-hook-form";
-import { StyleSheet, Text, View } from "react-native";
+import AuthHeader from "../components/AuthHeader";
+import AuthSwitchLink from "../components/AuthSwitchLink";
+import Card from "../components/Card";
 import FeedbackMessage from "../components/FeedbackMessage";
 import FormInput from "../components/FormInput";
+import Screen from "../components/Screen";
 import SubmitButton from "../components/SubmitButton";
 import { useAuth } from "../context/AuthProvider";
 import { signInSchema, type SignInFormData } from "../schemas/auth";
@@ -15,6 +17,7 @@ export default function SignInScreen() {
     control,
     handleSubmit,
     setError,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -24,50 +27,63 @@ export default function SignInScreen() {
   const onSubmit = async ({ email, password }: SignInFormData) => {
     try {
       await signIn(email, password);
+      // On success the route guard in _layout.tsx redirects to /profile
     } catch (error) {
       setError("root", { message: getAuthErrorMessage(error) });
     }
   };
 
+  const submit = () => handleSubmit(onSubmit)();
+
   return (
-    <View style={styles.container}>
-      <View style={styles.form}>
-        <Text style={styles.heading}>Sign in</Text>
+    <Screen>
+      <AuthHeader
+        title="Welcome back"
+        subtitle="Sign in to see your profile and members-only lessons."
+      />
+      <Card>
         <FormInput
           control={control}
           name="email"
+          label="Email"
           error={errors.email?.message}
           editable={!isSubmitting}
-          placeholder="Email"
+          placeholder="you@example.com"
           autoCapitalize="none"
           keyboardType="email-address"
           autoComplete="email"
+          textContentType="emailAddress"
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => setFocus("password")}
         />
         <FormInput
           control={control}
           name="password"
+          label="Password"
           error={errors.password?.message}
           editable={!isSubmitting}
-          placeholder="Password"
+          placeholder="Your password"
           secureTextEntry
           autoCapitalize="none"
           autoComplete="current-password"
+          textContentType="password"
+          returnKeyType="go"
+          onSubmitEditing={submit}
         />
         <FeedbackMessage type="error" message={errors.root?.message} />
         <SubmitButton
           title="Sign in"
           loadingTitle="Signing in..."
           loading={isSubmitting}
-          onPress={() => handleSubmit(onSubmit)()}
+          onPress={submit}
         />
-      </View>
-      <Link href="/sign-up">Need an account? Sign up</Link>
-    </View>
+      </Card>
+      <AuthSwitchLink
+        prompt="New here?"
+        linkText="Create an account"
+        href="/sign-up"
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 16 },
-  form: { gap: 12 },
-  heading: { fontSize: 18, fontWeight: "bold" },
-});

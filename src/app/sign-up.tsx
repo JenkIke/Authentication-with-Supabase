@@ -1,11 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import AuthHeader from "../components/AuthHeader";
+import AuthSwitchLink from "../components/AuthSwitchLink";
+import Card from "../components/Card";
 import FeedbackMessage from "../components/FeedbackMessage";
 import FormInput from "../components/FormInput";
 import PublicInstruments from "../components/PublicInstruments";
+import Screen from "../components/Screen";
 import SubmitButton from "../components/SubmitButton";
 import { useAuth } from "../context/AuthProvider";
 import { signUpSchema, type SignUpFormData } from "../schemas/auth";
@@ -18,6 +20,7 @@ export default function SignUp() {
     control,
     handleSubmit,
     setError,
+    setFocus,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<SignUpFormData>({
@@ -47,56 +50,80 @@ export default function SignUp() {
           `Account created! We sent a confirmation link to ${email}. Open it, then sign in.`,
         );
       }
+      // "signed-in": the route guard in _layout.tsx redirects to /profile
     } catch (error) {
       setError("root", { message: getAuthErrorMessage(error) });
     }
   };
 
+  const submit = () => handleSubmit(onSubmit)();
+
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.form}>
-        <Text style={styles.heading}>Sign up</Text>
+    <Screen>
+      <AuthHeader
+        title="Create your account"
+        subtitle="Join to unlock members-only lessons. It only takes a minute."
+      />
+      <Card>
         <FormInput
           control={control}
           name="username"
+          label="Username"
+          hint="3–20 characters. Shown in the app's header."
           error={errors.username?.message}
           editable={!isSubmitting}
-          placeholder="Username"
+          placeholder="e.g. jamie_plays"
           autoCapitalize="none"
           autoComplete="username"
+          textContentType="username"
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => setFocus("email")}
         />
         <FormInput
           control={control}
           name="email"
+          label="Email"
           error={errors.email?.message}
           editable={!isSubmitting}
-          placeholder="Email"
+          placeholder="you@example.com"
           autoCapitalize="none"
           keyboardType="email-address"
           autoComplete="email"
+          textContentType="emailAddress"
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => setFocus("password")}
         />
         <FormInput
           control={control}
           name="password"
+          label="Password"
+          hint="At least 6 characters. A mix of letters, numbers and symbols is strongest."
           error={errors.password?.message}
           editable={!isSubmitting}
-          placeholder="Password"
+          placeholder="Create a password"
           secureTextEntry
           autoCapitalize="none"
           autoComplete="new-password"
+          textContentType="newPassword"
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => setFocus("confirmPassword")}
         />
         <FormInput
           control={control}
           name="confirmPassword"
+          label="Confirm password"
           error={errors.confirmPassword?.message}
           editable={!isSubmitting}
-          placeholder="Confirm password"
+          placeholder="Type it again"
           secureTextEntry
           autoCapitalize="none"
           autoComplete="new-password"
+          textContentType="newPassword"
+          returnKeyType="go"
+          onSubmitEditing={submit}
         />
         <FeedbackMessage type="error" message={errors.root?.message} />
         <FeedbackMessage type="success" message={notice} />
@@ -104,17 +131,15 @@ export default function SignUp() {
           title="Create account"
           loadingTitle="Creating account..."
           loading={isSubmitting}
-          onPress={() => handleSubmit(onSubmit)()}
+          onPress={submit}
         />
-      </View>
-      <Link href="/sign-in">Already have an account? Sign in</Link>
+      </Card>
+      <AuthSwitchLink
+        prompt="Already have an account?"
+        linkText="Sign in"
+        href="/sign-in"
+      />
       <PublicInstruments />
-    </ScrollView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 24, gap: 16 },
-  form: { gap: 12 },
-  heading: { fontSize: 18, fontWeight: "bold" },
-});

@@ -1,4 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import type { Theme } from "../constants/theme";
+import { useTheme, useThemedStyles } from "../hooks/use-theme";
 
 type SubmitButtonProps = {
   title: string;
@@ -6,7 +8,8 @@ type SubmitButtonProps = {
   loading?: boolean;
   loadingTitle?: string;
   disabled?: boolean;
-  variant?: "primary" | "danger";
+  /** primary = filled indigo, secondary = outlined, danger = filled red */
+  variant?: "primary" | "secondary" | "danger";
 };
 
 export default function SubmitButton({
@@ -17,42 +20,60 @@ export default function SubmitButton({
   disabled = false,
   variant = "primary",
 }: SubmitButtonProps) {
+  const theme = useTheme();
+  const styles = useThemedStyles(createStyles);
   const isDisabled = disabled || loading;
+
+  const textColor =
+    variant === "secondary"
+      ? theme.colors.primary
+      : variant === "danger"
+        ? theme.colors.onDanger
+        : theme.colors.onPrimary;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={isDisabled}
       accessibilityRole="button"
+      accessibilityLabel={loading && loadingTitle ? loadingTitle : title}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       style={({ pressed }) => [
         styles.button,
-        variant === "danger" ? styles.danger : styles.primary,
-        pressed && styles.pressed,
+        styles[variant],
+        pressed && (variant === "primary" ? styles.primaryPressed : styles.pressed),
         isDisabled && styles.disabled,
       ]}
     >
-      {loading && <ActivityIndicator color="#fff" />}
-      <Text style={styles.text}>
+      {loading && <ActivityIndicator color={textColor} />}
+      <Text style={[styles.text, { color: textColor }]}>
         {loading && loadingTitle ? loadingTitle : title}
       </Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    borderRadius: 6,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  primary: { backgroundColor: "#1565c0" },
-  danger: { backgroundColor: "#d32f2f" },
-  pressed: { opacity: 0.8 },
-  disabled: { opacity: 0.6 },
-  text: { color: "#fff", fontSize: 16, fontWeight: "600" },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    button: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: t.spacing.sm,
+      minHeight: 48,
+      borderRadius: t.radius.sm,
+      paddingVertical: t.spacing.md,
+      paddingHorizontal: t.spacing.lg,
+    },
+    primary: { backgroundColor: t.colors.primary },
+    primaryPressed: { backgroundColor: t.colors.primaryPressed },
+    secondary: {
+      backgroundColor: "transparent",
+      borderWidth: 1.5,
+      borderColor: t.colors.primary,
+    },
+    danger: { backgroundColor: t.colors.danger },
+    pressed: { opacity: 0.8 },
+    disabled: { opacity: 0.6 },
+    text: { fontSize: t.fontSize.body, fontWeight: "600" },
+  });
