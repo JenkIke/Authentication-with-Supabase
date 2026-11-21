@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useAuth } from "../context/AuthProvider";
@@ -15,6 +16,10 @@ export default function SignOut() {
     setError(null);
     try {
       await signOut();
+      // Signing out makes Expo Router *replace* Profile with a new Home screen,
+      // leaving a duplicate Home (and a stray back arrow) underneath.
+      // Go back to the original Home instead so only one is left.
+      if (router.canDismiss()) router.dismissAll();
     } catch (error) {
       setError(getAuthErrorMessage(error));
       setLoading(false);

@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import Card from "../components/Card";
 import FeedbackMessage from "../components/FeedbackMessage";
 import ProtectedLessons from "../components/ProtectedLessons";
+import Screen from "../components/Screen";
 import SignOut from "../components/SignOut";
 import SubmitButton from "../components/SubmitButton";
+import type { Theme } from "../constants/theme";
 import { useAuth } from "../context/AuthProvider";
+import { useTheme, useThemedStyles } from "../hooks/use-theme";
 import { getLoadErrorMessage } from "../utils/errors";
 import { supabase } from "../utils/supabase";
 
@@ -40,6 +38,8 @@ async function fetchProfile(userId: string): Promise<ProfileResult> {
 
 export default function Profile() {
   const { user, displayName } = useAuth();
+  const theme = useTheme();
+  const styles = useThemedStyles(createStyles);
   const userId = user?.id;
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,60 +72,56 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-        <Text style={styles.muted}>Loading your profile...</Text>
-      </View>
+      <Screen centered>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.label}>Loading your profile...</Text>
+        </View>
+      </Screen>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.container}>
+      <Screen centered>
         <FeedbackMessage type="error" message={error} />
         <SubmitButton title="Try again" onPress={retry} />
         <SignOut />
-      </View>
+      </Screen>
     );
   }
 
+  const fields = [
+    { label: "Display name", value: profile?.display_name ?? displayName },
+    { label: "Email", value: user?.email },
+    {
+      label: "Favourite instrument",
+      value: profile?.favourite_instrument ?? "None yet",
+    },
+  ];
+
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
-      <View style={styles.card}>
-        <Text style={styles.badge}>PRIVATE</Text>
-        <Text style={styles.label}>Display name</Text>
-        <Text style={styles.value}>{profile?.display_name ?? displayName}</Text>
-        <Text style={styles.label}>Email</Text>
-        <Text style={styles.value}>{user?.email}</Text>
-        <Text style={styles.label}>Favourite instrument</Text>
-        <Text style={styles.value}>
-          {profile?.favourite_instrument ?? "None yet"}
-        </Text>
-      </View>
+    <Screen>
+      <Card>
+        {fields.map((field) => (
+          <View key={field.label} style={styles.field}>
+            <Text style={styles.label}>{field.label}</Text>
+            <Text style={styles.value}>{field.value}</Text>
+          </View>
+        ))}
+      </Card>
+
       <ProtectedLessons />
+
       <SignOut />
-    </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 12 },
-  scroll: { padding: 24, gap: 12 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
-  muted: { color: "#666" },
-  card: {
-    borderWidth: 1,
-    borderColor: "#999",
-    borderRadius: 8,
-    padding: 16,
-    gap: 4,
-  },
-  badge: {
-    alignSelf: "flex-start",
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "crimson",
-  },
-  label: { fontSize: 12, color: "#666", marginTop: 8 },
-  value: { fontSize: 18 },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    center: { alignItems: "center", gap: t.spacing.md },
+    field: { gap: 2 },
+    label: { fontSize: t.fontSize.label, color: t.colors.textMuted },
+    value: { fontSize: t.fontSize.body, color: t.colors.text },
+  });

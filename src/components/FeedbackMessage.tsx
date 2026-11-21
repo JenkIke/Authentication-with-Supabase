@@ -1,14 +1,18 @@
 import { StyleSheet, Text, View } from "react-native";
+import type { Theme } from "../constants/theme";
+import { useThemedStyles } from "../hooks/use-theme";
 
 type FeedbackMessageProps = {
   type: "error" | "success" | "info";
   message?: string | null;
 };
 
+/** Coloured banner for form-level errors, success notices and info. */
 export default function FeedbackMessage({
   type,
   message,
 }: FeedbackMessageProps) {
+  const styles = useThemedStyles(createStyles);
   if (!message) return null;
 
   return (
@@ -22,13 +26,17 @@ export default function FeedbackMessage({
   );
 }
 
-const styles = StyleSheet.create({
-  box: { borderWidth: 1, borderRadius: 6, padding: 12 },
-  text: { fontSize: 14 },
-  error: { backgroundColor: "#fdecea", borderColor: "#f5c2c0" },
-  errorText: { color: "#b71c1c" },
-  success: { backgroundColor: "#e8f5e9", borderColor: "#b9dfbb" },
-  successText: { color: "#1b5e20" },
-  info: { backgroundColor: "#e3f2fd", borderColor: "#b6d8f5" },
-  infoText: { color: "#0d47a1" },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    box: { borderWidth: 1, borderRadius: t.radius.sm, padding: t.spacing.md },
+    text: { fontSize: t.fontSize.label, lineHeight: 20 },
+    error: { backgroundColor: t.colors.errorBg, borderColor: t.colors.errorBorder },
+    errorText: { color: t.colors.errorText },
+    success: {
+      backgroundColor: t.colors.successBg,
+      borderColor: t.colors.successBorder,
+    },
+    successText: { color: t.colors.successText },
+    info: { backgroundColor: t.colors.infoBg, borderColor: t.colors.infoBorder },
+    infoText: { color: t.colors.infoText },
+  });

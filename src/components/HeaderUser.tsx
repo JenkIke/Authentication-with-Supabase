@@ -1,9 +1,13 @@
 import { Link } from "expo-router";
 import { StyleSheet, Text } from "react-native";
+import type { Theme } from "../constants/theme";
 import { useAuth } from "../context/AuthProvider";
+import { useThemedStyles } from "../hooks/use-theme";
 
+/** Signed-in user's name (or email) in the navigation bar. Opens Profile. */
 export default function HeaderUser() {
   const { displayName } = useAuth();
+  const styles = useThemedStyles(createStyles);
   if (!displayName) return null;
 
   return (
@@ -18,6 +22,12 @@ export default function HeaderUser() {
   );
 }
 
-const styles = StyleSheet.create({
-  text: { maxWidth: 180, fontSize: 14, fontWeight: "600", color: "#1565c0" },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    text: {
+      maxWidth: 180,
+      fontSize: t.fontSize.label,
+      fontWeight: "600",
+      color: t.colors.primary,
+    },
+  });

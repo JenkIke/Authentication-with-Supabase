@@ -65,7 +65,9 @@ An Expo (React Native) app that uses Supabase Auth for sign-up, sign-in and sign
 
 | Email | Password |
 |---|---|
-| _example@gmail.com_ | _password_ |
+| cprg303.tester@example.com | Group1Test!2026 |
+
+Or create your own account on the Sign-up screen.
 
 ## Security notes
 

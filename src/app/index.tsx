@@ -1,42 +1,54 @@
-import { Link } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import PageHeader from "../components/PageHeader";
 import PublicInstruments from "../components/PublicInstruments";
+import Screen from "../components/Screen";
+import SubmitButton from "../components/SubmitButton";
+import type { Theme } from "../constants/theme";
 import { useAuth } from "../context/AuthProvider";
+import { useThemedStyles } from "../hooks/use-theme";
 
 export default function Home() {
   const { session, displayName } = useAuth();
+  const styles = useThemedStyles(createStyles);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Home Page</Text>
-
+    <Screen>
       {session ? (
-        <View style={styles.nav}>
-          <Text style={styles.welcome}>Welcome back, {displayName}!</Text>
-          <Link href="/profile" style={styles.link}>
-            View your profile
-          </Link>
+        <View style={styles.block}>
+          <PageHeader
+            title={`Welcome back, ${displayName}`}
+            subtitle="Your members-only lessons are on your profile."
+          />
+          <SubmitButton
+            title="Go to my profile"
+            onPress={() => router.push("/profile")}
+          />
         </View>
       ) : (
-        <View style={styles.nav}>
-          <Link href="/sign-in" style={styles.link}>
-            Sign in
-          </Link>
-          <Link href="/sign-up" style={styles.link}>
-            Sign up
-          </Link>
+        <View style={styles.block}>
+          <PageHeader
+            title="Welcome"
+            subtitle="Sign in or create an account to see members-only lessons."
+          />
+          <SubmitButton
+            title="Sign in"
+            onPress={() => router.push("/sign-in")}
+          />
+          <SubmitButton
+            title="Create account"
+            variant="secondary"
+            onPress={() => router.push("/sign-up")}
+          />
         </View>
       )}
 
       <PublicInstruments />
-    </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 24, gap: 24 },
-  title: { fontSize: 28, fontWeight: "bold" },
-  nav: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  welcome: { fontSize: 16, width: "100%" },
-  link: { fontSize: 16, color: "#1565c0", textDecorationLine: "underline" },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    block: { gap: t.spacing.md },
+  });
